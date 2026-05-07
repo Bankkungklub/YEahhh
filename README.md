@@ -1,5 +1,7 @@
 # Tank Arena
 
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/Bankkungklub/YEahhh)
+
 A browser tank arena inspired by diep.io: large map, WebSocket multiplayer, public/custom rooms, bots, shooting, command drones, shapes, XP, upgrades, cosmetic accounts, shop inventory, leaderboard, minimap, death/respawn, and debug tools.
 
 The current arena is `9000x9000` with a large center `Alpha Pentagon`. It has `1400 HP`, grants `4200 XP` through contribution-based shared rewards, and respawns every `45s`. Timed Alpha Sector events now spawn elite objectives around the arena so players have smaller risk/reward fights away from center.
