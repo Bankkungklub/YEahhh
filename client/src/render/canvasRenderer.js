@@ -6,6 +6,7 @@ import { getActiveScreenShake, getEffectProgress, pruneEffects } from "../game/e
 import { getRenderSnapshot, getTankFromSnapshot } from "../game/clientState.js";
 import { getPredictedLocalTank } from "../game/localPrediction.js";
 import { ARCADE_WORLD_THEME } from "./arcadeWorldTheme.js";
+import { computeCameraScale, computeVisibleWorldSize, getViewportProfile } from "./cameraViewport.js";
 
 const VIEWPORT_PADDING = 160;
 const SHAPE_HEALTH_NEARBY_DISTANCE = 320;
@@ -27,7 +28,11 @@ export function createCanvasRenderer(canvas, state) {
     context.setTransform(dpr, 0, 0, dpr, 0, 0);
     camera.width = window.innerWidth;
     camera.height = window.innerHeight;
-    camera.scale = 1;
+    camera.scale = computeCameraScale(camera);
+    const visibleWorld = computeVisibleWorldSize(camera, camera.scale);
+    camera.visibleWorldWidth = visibleWorld.width;
+    camera.visibleWorldHeight = visibleWorld.height;
+    camera.viewportProfile = getViewportProfile(camera);
   }
 
   function render(now) {
@@ -156,10 +161,11 @@ export function createCanvasRenderer(canvas, state) {
 
   function drawGrid(world) {
     const grid = world.gridSize ?? GAME_CONFIG.world.gridSize;
-    const left = camera.x - camera.width / 2;
-    const right = camera.x + camera.width / 2;
-    const top = camera.y - camera.height / 2;
-    const bottom = camera.y + camera.height / 2;
+    const scale = Math.max(0.001, camera.scale || 1);
+    const left = camera.x - camera.width / (2 * scale);
+    const right = camera.x + camera.width / (2 * scale);
+    const top = camera.y - camera.height / (2 * scale);
+    const bottom = camera.y + camera.height / (2 * scale);
     const startX = Math.max(0, Math.floor(left / grid) * grid);
     const endX = Math.min(world.width, Math.ceil(right / grid) * grid);
     const startY = Math.max(0, Math.floor(top / grid) * grid);
@@ -983,10 +989,8 @@ export function createCanvasRenderer(canvas, state) {
   }
 
   function drawMinimap(snapshot, localTank) {
-    const size = Math.min(150, Math.max(112, camera.width * 0.16));
-    const padding = 16;
-    const x = camera.width - size - padding;
-    const y = camera.height - size - padding;
+    const box = getMinimapBoxFromLayout(state.hudLayout, camera);
+    const { x, y, size } = box;
     const world = snapshot.world;
 
     context.save();
@@ -1248,6 +1252,27 @@ export function createCanvasRenderer(canvas, state) {
     getCamera() {
       return camera;
     }
+  };
+}
+
+export function getMinimapBoxFromLayout(layout, camera = {}) {
+  const layoutBox = layout?.minimap;
+  if (layoutBox && Number.isFinite(layoutBox.x) && Number.isFinite(layoutBox.y) && Number.isFinite(layoutBox.width)) {
+    const size = Math.max(1, Number(layoutBox.width) || 1);
+    return {
+      x: Number(layoutBox.x) || 0,
+      y: Number(layoutBox.y) || 0,
+      size
+    };
+  }
+  const width = Math.max(1, Number(camera.width) || 1280);
+  const height = Math.max(1, Number(camera.height) || 720);
+  const size = Math.min(150, Math.max(112, width * 0.16));
+  const padding = 16;
+  return {
+    x: width - size - padding,
+    y: height - size - padding,
+    size
   };
 }
 

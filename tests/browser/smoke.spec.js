@@ -50,6 +50,7 @@ test.describe("browser gameplay smoke", () => {
     await expect(page.locator("#healthText")).toContainText(/HP \d+ \/ \d+/);
     await expect(page.locator("#touchControls")).toBeVisible();
     await expect(page.locator("#touchFireLockButton")).toBeVisible();
+    await expect(page.locator(".leaderboard")).toBeHidden();
 
     await dispatchCanvasTouch(page, "touchstart", [
       { id: 1, x: 62, y: 552 },
@@ -67,6 +68,16 @@ test.describe("browser gameplay smoke", () => {
     await dispatchCanvasTouch(page, "touchend", [{ id: 2, x: 376, y: 520 }]);
     await expect(page.locator("#touchFireLockButton")).toHaveText("FIRING");
 
+    await showDebugOverlay(page);
+    const debugText = await page.locator("#debugOverlay").textContent();
+    const debugPayload = JSON.parse(debugText ?? "{}");
+    expect(debugPayload.camera.scale).toBeLessThan(1);
+    expect(debugPayload.camera.visibleWorldWidth).toBeGreaterThanOrEqual(525);
+    expect(debugPayload.hud.viewport.compactHud).toBe(true);
+    expect(debugPayload.hud.minimap.y).toBeLessThan(40);
+    await page.keyboard.press("F3");
+    await expect(page.locator("#debugOverlay")).toBeHidden();
+
     await setDeveloperLevel(page, 15);
     await expect(page.locator(".class-upgrade-card")).toHaveCount(4);
     await expect(page.locator(".class-upgrade-fact").first()).toBeVisible();
@@ -75,6 +86,25 @@ test.describe("browser gameplay smoke", () => {
     expect(await boxesOverlapOnPage(page, ".class-upgrade-panel", "#touchFireLockButton", 4)).toBe(false);
 
     await dispatchCanvasTouch(page, "touchend", [{ id: 1, x: 112, y: 552 }]);
+    expectNoRuntimeErrors(runtimeErrors);
+  });
+
+  test("phone landscape viewport uses compact gameplay HUD and zoomed-out camera", async ({ page }) => {
+    const runtimeErrors = collectRuntimeErrors(page);
+    await page.setViewportSize({ width: 854, height: 384 });
+
+    await page.goto("/");
+    await joinArena(page, "LandscapeSmoke");
+    await expect(page.locator("#hud")).toHaveClass(/compact-hud/);
+    await expect(page.locator(".leaderboard")).toBeHidden();
+
+    await showDebugOverlay(page);
+    const debugText = await page.locator("#debugOverlay").textContent();
+    const debugPayload = JSON.parse(debugText ?? "{}");
+    expect(debugPayload.camera.scale).toBeLessThan(1);
+    expect(debugPayload.camera.scale).toBeGreaterThanOrEqual(0.72);
+    expect(debugPayload.hud.viewport.phoneLandscape).toBe(true);
+    expect(debugPayload.hud.minimap.width).toBeLessThanOrEqual(76);
     expectNoRuntimeErrors(runtimeErrors);
   });
 });

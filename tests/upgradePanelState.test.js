@@ -20,6 +20,7 @@ test("upgrade panel state loads, toggles, and persists collapsed preference", ()
 
   const loaded = createUpgradePanelState(storage);
   assert.equal(loaded.collapsed, true);
+  assert.equal(loaded.compactCollapsed, true);
 });
 
 test("collapsed upgrade view model shows point count and pulse state", () => {
@@ -57,6 +58,61 @@ test("upgrade pulse expires without another point change", () => {
 
   assert.equal(active.pulse, true);
   assert.equal(expired.pulse, false);
+});
+
+test("compact mobile upgrade view starts collapsed without rewriting desktop preference", () => {
+  const storage = createMemoryStorage();
+  let state = createUpgradePanelState(storage);
+  assert.equal(state.collapsed, false);
+
+  let mobileModel = getUpgradePanelViewModel({
+    panelState: state,
+    localTank: { state: "alive", upgradePoints: 2 },
+    compactHud: true
+  });
+  assert.equal(mobileModel.collapsed, true);
+  assert.equal(storage.getItem("tankArena.upgradePanel.v1"), null);
+
+  state = toggleUpgradePanelState(state, storage, undefined, { compactHud: true });
+  mobileModel = getUpgradePanelViewModel({
+    panelState: state,
+    localTank: { state: "alive", upgradePoints: 2 },
+    compactHud: true
+  });
+  assert.equal(mobileModel.collapsed, false);
+  assert.equal(state.collapsed, false);
+  assert.equal(storage.getItem("tankArena.upgradePanel.v1"), null);
+});
+
+test("compact mobile upgrade points pulse but do not auto-expand", () => {
+  const state = markUpgradePointsChanged(
+    { collapsed: false, compactCollapsed: true, userCollapsed: false, lastAvailablePoints: 0, pulseUntilMs: 0 },
+    2,
+    1000,
+    undefined,
+    { compactHud: true }
+  );
+  const model = getUpgradePanelViewModel({
+    panelState: state,
+    localTank: { state: "alive", upgradePoints: 2 },
+    nowMs: 1100,
+    compactHud: true
+  });
+
+  assert.equal(state.collapsed, false);
+  assert.equal(state.compactCollapsed, true);
+  assert.equal(model.collapsed, true);
+  assert.equal(model.pulse, true);
+});
+
+test("desktop upgrade points can still auto-expand from collapsed state", () => {
+  const state = markUpgradePointsChanged(
+    { collapsed: true, compactCollapsed: true, userCollapsed: false, lastAvailablePoints: 0, pulseUntilMs: 0 },
+    2,
+    1000
+  );
+
+  assert.equal(state.collapsed, false);
 });
 
 test("upgrade view model hides while gameplay controls are suspended", () => {

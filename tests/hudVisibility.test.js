@@ -12,7 +12,22 @@ test("alive gameplay shows upgrade controls and class cards", () => {
   assert.equal(visibility.showClassCards, true);
   assert.equal(visibility.showTreeButton, true);
   assert.equal(visibility.showDeveloperPanel, true);
+  assert.equal(visibility.showLeaderboard, true);
   assert.equal(isGameplayPanelInteractive(visibility), true);
+});
+
+test("compact mobile gameplay hides full leaderboard without blocking core controls", () => {
+  const visibility = getHudVisibility({
+    state: { screen: "playing", account: { isDeveloper: false } },
+    localTank: { state: "alive" },
+    viewportProfile: { compactHud: true, phonePortrait: true }
+  });
+
+  assert.equal(visibility.compactHud, true);
+  assert.equal(visibility.showLeaderboard, false);
+  assert.equal(visibility.showStatUpgrades, true);
+  assert.equal(visibility.showClassCards, true);
+  assert.equal(visibility.showTreeButton, true);
 });
 
 test("dead gameplay hides interactive upgrade and developer controls", () => {

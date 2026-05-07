@@ -78,6 +78,7 @@ Reason:
 - `client/src/input/touchControls.js`: mobile twin-stick touch state, movement vector, aim/fire, fire lock, and overlay view model.
 - `client/src/input/touchControlsConfig.js`: touch-control radius, dead zone, side split, mobile breakpoint, and overlay fade tuning.
 - `client/src/render/canvasRenderer.js`: world, tanks, drones, bullets, shapes, and minimap rendering.
+- `client/src/render/cameraViewport.js`: pure compact-viewport detection, mobile camera scale, and visible-world-size formulas.
 - `client/src/render/arcadeWorldTheme.js`: bright arcade world color tokens.
 - `client/src/render/renderQuality.js`: adaptive quality mode for decorative render cost.
 - `client/src/render/tankClassIcons.js`: DOM/CSS tank icons for the evolution tree using the same class visual schema as the canvas tank renderer.
@@ -694,7 +695,7 @@ The evolution tree is a client-visible diagram backed by server-owned class stat
 
 - Class upgrade cards appear automatically when `classUnlockChoices` is non-empty. Cards are selectable by click/tap or `1`-`4`.
 - Class upgrade cards include identity metadata: role pill, weapon behavior, strength line, config-derived weapon fact chips, and compact weakness line. Desktop cards show up to three chips; mobile hides chips after the first two and hides the weakness line first to keep cards tappable at `390x720`.
-- Mobile safe zones are computed in `hudLayout.js` instead of guessed in CSS. At phone widths, class cards use a compact height, move above the lower thumb-control lane, and avoid the bottom HP/XP bars and fire-lock button. The touch-control lane reserves left/right boxes under class cards; fire lock stays in that lower lane.
+- Mobile safe zones are computed in `hudLayout.js` instead of guessed in CSS. At phone widths and short phone-landscape heights, class cards use a compact height, move above the lower thumb-control lane, and avoid the bottom HP/XP bars, fire-lock button, and compact top-right minimap. The touch-control lane reserves left/right boxes under class cards; fire lock stays in that lower lane.
 - Class upgrade cards are suspended while a modal or full TREE is open and are hidden while dead.
 - Card layout uses safe-zone CSS variables so cards sit above the bottom HP/XP bar and away from the minimap/side docks.
 - Pressing `Escape` or the card header `HIDE` button collapses the current tier into `CLASS +N`; a new tier or new class path auto-expands again.
@@ -745,7 +746,7 @@ The evolution tree is a client-visible diagram backed by server-owned class stat
 
 ## Debug Tools
 
-- Browser `F3` overlay: FPS, frame time, render time, HUD time, adaptive render quality, RTT, screen state, HUD visibility/layout state, room step timing, server tick, snapshot age, snapshot buffer size, interpolation mode, visible entity counts, total entity counts, bot profile counts, bot behavior counts, class counts, bot class counts, class upgrade state, class visual signature/role/DPS ratios, upgrade panel collapsed state, projectile kind counts, trap block count, contact pair/damage counters, server spatial/collision counters, local tank summary, death penalty summary, and client audio state.
+- Browser `F3` overlay: FPS, frame time, render time, HUD time, adaptive render quality, RTT, screen state, HUD visibility/layout state, camera scale/visible-world size, minimap box, room step timing, server tick, snapshot age, snapshot buffer size, interpolation mode, visible entity counts, total entity counts, bot profile counts, bot behavior counts, class counts, bot class counts, class upgrade state, class visual signature/role/DPS ratios, upgrade panel collapsed state, projectile kind counts, trap block count, contact pair/damage counters, server spatial/collision counters, local tank summary, death penalty summary, and client audio state.
 - F3 and room debug also include `centerObjective`, `eventObjectives`, `shapeCounts`, and `balanceVersion` so map-object state and reward tuning can be verified without guessing.
 - `centerObjective.metrics` reports Alpha lifetime, kill count, contributor peaks, human/bot damage split, reward totals, killer kind, and recent kill samples.
 - `eventObjectives` reports active sector objectives, spawn/completion/expiry counts, average completed lifetime, human/bot damage split, reward totals, completion rate, and the last `8` event samples.
@@ -757,8 +758,8 @@ The evolution tree is a client-visible diagram backed by server-owned class stat
 - README manual test checklist.
 - Node tests for formulas, Alpha Sector event objective lifecycle/rewards/expiry, command drone config/lifecycle/combat/conversion/balance, projectile behavior, contact collision, spawn safety, HUD visibility/layout, renderer quality guards, collapsible upgrade UI, client feedback, onboarding, menu view models, bot governance, auth, shop, economy, and matchmaking.
 - Class tests cover graph validation, level 15/30/45/60 unlock rules, protocol parsing, full-tree activation, class identity metadata, config-derived weapon fact chips, class visual signatures, class balance invariants, weapon projectile counts, delayed Streamliner/Stormcaller/Gunner/Auto Gunner/Sprayer timing/cleanup, limited-turn missiles, trap projectile blocking, and no-shot validation for drone classes.
-- Mobile tests cover finite touch movement/aim/fire, fire-lock reset when gameplay deactivates, small-phone safe-zone separation, mobile card chip clamping, and a browser smoke path that dispatches real touch events into the canvas before checking class-card overlap.
-- Playwright browser smoke tests run the real browser client against a local server on `127.0.0.1:3101`. They fail on console errors, page errors, failed join/HUD boot, broken developer level tooling, broken class-card tier flow, TREE/F3 runtime crashes, and mobile viewport join crashes.
+- Mobile tests cover finite touch movement/aim/fire, fire-lock reset when gameplay deactivates, small-phone safe-zone separation, Samsung-like portrait camera zoom-out, phone-landscape compact HUD, mobile card chip clamping, compact upgrade-panel behavior, and a browser smoke path that dispatches real touch events into the canvas before checking class-card overlap.
+- Playwright browser smoke tests run the real browser client against a local server on `127.0.0.1:3101`. They fail on console errors, page errors, failed join/HUD boot, broken developer level tooling, broken class-card tier flow, TREE/F3 runtime crashes, mobile viewport join crashes, phone camera scale regressions, visible leaderboard clutter on compact HUD, and short phone-landscape HUD regressions.
 
 ## Bright Arcade Gameplay Style
 
@@ -895,6 +896,23 @@ The menu is a mobile-first arcade lobby overlay inspired by classic arena shoote
 - The menu keeps stable DOM ids for `joinForm`, `playerName`, `joinButton`, and `menuStatus`.
 - The visual hierarchy is full-screen: decorative arena backdrop, corner action badges, chunky outlined title, mode/region tiles, name input, primary Play button, status, and control chips.
 - Touch targets are at least 44 px high, name input uses 16 px text to avoid mobile zoom, and safe-area padding is respected.
+
+## Mobile Combat Camera And HUD
+
+Mobile gameplay uses a compact combat-readability profile without changing server authority, combat values, controls, or save data.
+
+- Compact HUD activates when `width < 760` or `height < 520`, so tall portrait phones and short landscape phones both avoid desktop HUD density.
+- Camera scale is visual-only:
+  - desktop: `1.0`
+  - phone portrait: `clamp(width / 540, 0.68, 0.74)`
+  - phone landscape: `clamp(height / 520, 0.72, 0.84)`
+- Visible world is `viewport / cameraScale`. The `384x854` target shows at least `525` world units horizontally and `1150` vertically.
+- Compact minimap uses the layout model instead of fixed canvas math: portrait size `88px`, landscape size `76px`, top-right inset `12px`.
+- Compact gameplay hides the full leaderboard, keeps HP/XP bars at the bottom, keeps touch sticks/fire lock in the lower lane, and keeps class cards above those controls.
+- On compact HUD, the upgrade panel starts collapsed and does not auto-expand when points first appear; the collapsed pill still pulses and the player can tap it to open a scrollable drawer.
+- Mobile class cards show name, role, weapon/fact priority, and at most two fact chips. Weakness/long description copy hides first.
+- Debug reports `camera.scale`, `camera.visibleWorldWidth`, `camera.visibleWorldHeight`, `hud.viewport.compactHud`, and `hud.minimap`.
+- Tests cover `360x640`, `384x854`, `390x720`, `412x915`, and `854x384`.
 
 ## Mobile Twin-Stick Controls
 

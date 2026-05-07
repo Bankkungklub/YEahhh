@@ -2162,6 +2162,162 @@ button:disabled {
   }
 }
 
+.hud.compact-hud .leaderboard {
+  display: none !important;
+}
+
+.hud.compact-hud .bars {
+  left: 12px;
+  right: 12px;
+  bottom: max(10px, env(safe-area-inset-bottom));
+  max-width: none;
+  gap: 4px;
+  padding: 7px;
+  border-width: 3px;
+}
+
+.hud.compact-hud .bar-label {
+  font-size: 12px;
+}
+
+.hud.compact-hud .bar {
+  height: 12px;
+  border-width: 2px;
+}
+
+.hud.compact-hud .upgrade-panel {
+  top: 12px;
+  bottom: auto;
+  left: 12px;
+  width: min(176px, calc(48vw - 18px));
+  max-height: min(340px, 42svh);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+}
+
+.hud.compact-hud .upgrade-panel.collapsed {
+  width: min(156px, calc(46vw - 12px));
+  max-height: none;
+  overflow: visible;
+}
+
+.hud.compact-hud .upgrade-toggle {
+  min-height: 48px;
+  padding: 7px 9px;
+  font-size: 11px;
+}
+
+.hud.compact-hud .upgrade-button {
+  padding: 7px 8px;
+  border-width: 3px;
+  font-size: 11px;
+}
+
+.hud.compact-hud .upgrade-button strong {
+  font-size: 11px;
+}
+
+.hud.compact-hud .tree-button {
+  left: auto;
+  right: 12px;
+  top: calc(24px + var(--mobile-minimap-size, 88px));
+  min-width: 76px;
+  min-height: 42px;
+  padding: 7px 9px;
+  font-size: 13px;
+}
+
+.hud.compact-hud .class-upgrade-panel {
+  gap: 6px;
+}
+
+.hud.compact-hud .class-upgrade-header {
+  max-width: 100%;
+  padding: 5px 8px;
+  border-width: 3px;
+}
+
+.hud.compact-hud .class-upgrade-header strong {
+  font-size: 13px;
+}
+
+.hud.compact-hud .class-upgrade-header span {
+  display: none;
+}
+
+.hud.compact-hud .class-upgrade-cards {
+  display: flex;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  scroll-snap-type: x proximity;
+}
+
+.hud.compact-hud .class-upgrade-card {
+  min-width: 132px;
+  min-height: var(--mobile-class-card-height, 112px);
+  max-height: var(--mobile-class-card-height, 112px);
+  gap: 3px;
+  padding: 7px;
+  border-width: 4px;
+  scroll-snap-align: center;
+}
+
+.hud.compact-hud .class-upgrade-card strong {
+  font-size: 13px;
+}
+
+.hud.compact-hud .class-upgrade-role,
+.hud.compact-hud .class-upgrade-weapon {
+  font-size: 9px;
+}
+
+.hud.compact-hud .class-upgrade-facts {
+  min-height: 16px;
+  flex-wrap: nowrap;
+}
+
+.hud.compact-hud .class-upgrade-fact {
+  max-width: 58px;
+  padding: 2px 3px;
+  font-size: 8px;
+  overflow: hidden;
+}
+
+.hud.compact-hud .class-upgrade-fact:nth-child(n+3),
+.hud.compact-hud .class-upgrade-weakness,
+.hud.compact-hud .class-upgrade-card small {
+  display: none;
+}
+
+.hud.compact-hud .developer-panel {
+  left: auto;
+  right: 12px;
+  top: calc(76px + var(--mobile-minimap-size, 88px));
+  width: min(184px, calc(100vw - 24px));
+  max-height: min(280px, 42svh);
+  overflow-y: auto;
+}
+
+.hud.compact-hud .objective-pill {
+  top: 12px;
+  max-width: min(260px, 58vw);
+  padding: 8px 10px;
+  font-size: 12px;
+}
+
+.hud.compact-hud .action-priority-pill {
+  top: 54px;
+  max-width: min(260px, 62vw);
+  min-height: 34px;
+  padding: 6px 9px;
+  font-size: 11px;
+}
+
+.hud.compact-hud .action-priority-pill span {
+  display: none;
+}
+
 @media (min-width: 720px) {
   .death-panel {
     padding: 24px;

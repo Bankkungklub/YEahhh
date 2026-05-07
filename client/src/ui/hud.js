@@ -22,6 +22,7 @@ import { getHudActionPriority } from "./hudActionPriority.js";
 import { applyHudLayoutVariables, computeHudSafeZones } from "./hudLayout.js";
 import { createModalManager } from "./modalManager.js";
 import { getHudVisibility } from "./hudVisibility.js";
+import { getViewportProfile } from "../render/cameraViewport.js";
 import {
   createMenuViewModel,
   readStorageValue,
@@ -67,6 +68,7 @@ export function createHud({ state, audio, input, onJoin, onUpgrade, onSelectClas
   const xpFill = document.querySelector("#xpFill");
   const upgradePanel = document.querySelector("#upgradePanel");
   const treeButton = document.querySelector("#treeButton");
+  const leaderboardPanel = document.querySelector(".leaderboard");
   const leaderboardList = document.querySelector("#leaderboardList");
   const debugOverlay = document.querySelector("#debugOverlay");
   const bars = document.querySelector(".bars");
@@ -204,7 +206,9 @@ export function createHud({ state, audio, input, onJoin, onUpgrade, onSelectClas
     if (!state.hudVisibility?.showStatUpgrades) {
       return;
     }
-    state.upgradePanelUi = toggleUpgradePanelState(state.upgradePanelUi, localStorage);
+    state.upgradePanelUi = toggleUpgradePanelState(state.upgradePanelUi, localStorage, undefined, {
+      compactHud: Boolean(state.hudVisibility?.compactHud)
+    });
     uiCache.upgrades = "";
   });
 
@@ -238,7 +242,9 @@ export function createHud({ state, audio, input, onJoin, onUpgrade, onSelectClas
     }
     if (shouldHandleUpgradePanelHotkey(event) && state.hudVisibility?.showStatUpgrades) {
       event.preventDefault();
-      state.upgradePanelUi = toggleUpgradePanelState(state.upgradePanelUi, localStorage);
+      state.upgradePanelUi = toggleUpgradePanelState(state.upgradePanelUi, localStorage, undefined, {
+        compactHud: Boolean(state.hudVisibility?.compactHud)
+      });
       uiCache.upgrades = "";
     }
     if (event.code === "Escape" && !state.onboarding.completed) {
@@ -249,10 +255,17 @@ export function createHud({ state, audio, input, onJoin, onUpgrade, onSelectClas
   function update(now = performance.now()) {
     const menuView = createMenuViewModel(state);
     const localTank = getLocalTank(state);
-    const visibility = getHudVisibility({ state, localTank, modalOpen: modal.isOpen?.() });
+    const viewport = { width: window.innerWidth, height: window.innerHeight };
+    const viewportProfile = getViewportProfile(viewport);
+    const visibility = getHudVisibility({
+      state,
+      localTank,
+      modalOpen: modal.isOpen?.(),
+      viewportProfile
+    });
     const classCardChoices = localTank?.classUnlockChoices?.length ?? 0;
     const layout = computeHudSafeZones({
-      viewport: { width: window.innerWidth, height: window.innerHeight },
+      viewport,
       upgradeCollapsed: state.upgradePanelUi?.collapsed ?? false,
       classCardsVisible: visibility.showClassCards && classCardChoices > 0
     });
@@ -270,7 +283,7 @@ export function createHud({ state, audio, input, onJoin, onUpgrade, onSelectClas
     updateEvolutionTreeModal();
     updateObjectiveHud();
     updateDeveloperPanel(localTank, visibility);
-    updateLeaderboard();
+    updateLeaderboard(visibility);
     updateDeath();
     updateOnboarding(now);
     updateActionPriority(localTank, now, visibility);
@@ -307,6 +320,10 @@ export function createHud({ state, audio, input, onJoin, onUpgrade, onSelectClas
       visibility.showStatUpgrades,
       visibility.showTreeButton,
       visibility.showDeveloperPanel,
+      visibility.showLeaderboard,
+      visibility.compactHud,
+      visibility.phonePortrait,
+      visibility.phoneLandscape,
       classCardStatus
     ].join("|");
     if (uiCache.visibility === signature) {
@@ -315,6 +332,10 @@ export function createHud({ state, audio, input, onJoin, onUpgrade, onSelectClas
     uiCache.visibility = signature;
     hud.classList.toggle("gameplay-dead", visibility.showDeathOverlay);
     hud.classList.toggle("modal-open", visibility.modalOpen);
+    hud.classList.toggle("compact-hud", visibility.compactHud);
+    hud.classList.toggle("phone-portrait", visibility.phonePortrait);
+    hud.classList.toggle("phone-landscape", visibility.phoneLandscape);
+    hud.classList.toggle("leaderboard-hidden", !visibility.showLeaderboard);
     hud.classList.toggle("class-cards-visible", classCardStatus === "visible");
     hud.classList.toggle("class-cards-collapsed", classCardStatus === "collapsed");
   }
@@ -395,12 +416,15 @@ export function createHud({ state, audio, input, onJoin, onUpgrade, onSelectClas
     const points = Math.max(0, Math.trunc(Number(localTank?.upgradePoints) || 0));
     const upgradePreviews = getUpgradePreviewViewModel({ localTank, labels });
     const previewByKey = new Map(upgradePreviews.map((preview) => [preview.key, preview]));
-    state.upgradePanelUi = markUpgradePointsChanged(state.upgradePanelUi, points, now);
+    state.upgradePanelUi = markUpgradePointsChanged(state.upgradePanelUi, points, now, undefined, {
+      compactHud: visibility.compactHud
+    });
     const viewModel = getUpgradePanelViewModel({
       panelState: state.upgradePanelUi,
       localTank,
       nowMs: now,
-      visible: visibility.showStatUpgrades
+      visible: visibility.showStatUpgrades,
+      compactHud: visibility.compactHud
     });
     const signature = [
       viewModel.status,
@@ -412,7 +436,9 @@ export function createHud({ state, audio, input, onJoin, onUpgrade, onSelectClas
       state.publicConfig?.upgrades?.maxLevel ?? 7,
       JSON.stringify(localTank?.upgrades ?? {}),
       upgradePreviews.map((preview) => `${preview.key}:${preview.summary}:${preview.detail}`).join(","),
-      state.upgradePanelUi?.collapsed ?? false
+      state.upgradePanelUi?.collapsed ?? false,
+      state.upgradePanelUi?.compactCollapsed ?? true,
+      visibility.compactHud
     ].join("|");
     if (uiCache.upgrades === signature) {
       return;
@@ -441,15 +467,20 @@ export function createHud({ state, audio, input, onJoin, onUpgrade, onSelectClas
     }
   }
 
-  function updateLeaderboard() {
+  function updateLeaderboard(visibility) {
     const leaderboard = state.latestSnapshot?.leaderboard ?? [];
+    const visible = Boolean(visibility?.showLeaderboard);
     const signature = leaderboard
       .map((entry) => `${entry.id}:${entry.name}:${entry.score}:${entry.level}`)
-      .join("|");
+      .join("|") + `|visible:${visible}`;
     if (uiCache.leaderboard === signature) {
       return;
     }
     uiCache.leaderboard = signature;
+    leaderboardPanel?.classList.toggle("hidden", !visible);
+    if (!visible) {
+      return;
+    }
     leaderboardList.replaceChildren();
 
     for (const entry of leaderboard) {
@@ -588,9 +619,18 @@ export function createHud({ state, audio, input, onJoin, onUpgrade, onSelectClas
       renderQuality: state.renderMetrics.renderQuality,
       rttMs: state.rttMs,
       screen: state.screen,
+      camera: state.camera
+        ? {
+            scale: Math.round((state.camera.scale ?? 1) * 1000) / 1000,
+            visibleWorldWidth: Math.round(state.camera.visibleWorldWidth ?? 0),
+            visibleWorldHeight: Math.round(state.camera.visibleWorldHeight ?? 0)
+          }
+        : null,
       hud: {
         visibility: state.hudVisibility,
         layout: state.hudLayout?.cssVars ?? {},
+        viewport: state.hudLayout?.viewport ?? {},
+        minimap: state.hudLayout?.minimap ?? null,
         statUpgrades: state.upgradePanelUi?.collapsed ? "collapsed" : "expanded",
         classCards: state.classUpgradeUi?.status ?? "hidden",
         activeModal: modal.getTitle?.() || null,

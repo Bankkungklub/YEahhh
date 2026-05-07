@@ -39,9 +39,10 @@ test("mobile layout reserves vertical space for class cards", () => {
   assert.equal(boxesOverlap(layout.classCards, layout.touchZones.move, 4), false);
   assert.equal(boxesOverlap(layout.classCards, layout.touchZones.aim, 4), false);
   assert.equal(boxesOverlap(layout.classCards, layout.touchZones.fireLock, 4), false);
-  assert.equal(layout.cssVars["--class-card-bottom"], "256px");
-  assert.equal(layout.cssVars["--mobile-class-card-height"], "148px");
-  assert.equal(layout.cssVars["--touch-fire-lock-bottom"], "122px");
+  assert.equal(boxesOverlap(layout.minimap, layout.bottomStatus, 4), false);
+  assert.equal(layout.cssVars["--class-card-bottom"], "214px");
+  assert.equal(layout.cssVars["--mobile-class-card-height"], "112px");
+  assert.equal(layout.cssVars["--touch-fire-lock-bottom"], "90px");
 });
 
 test("small mobile layout keeps touch zones, cards, and bottom HUD separated", () => {
@@ -59,6 +60,43 @@ test("small mobile layout keeps touch zones, cards, and bottom HUD separated", (
   assert.equal(boxesOverlap(layout.classCards, layout.touchZones.fireLock, 4), false);
   assert.equal(boxesOverlap(layout.touchZones.move, layout.bottomStatus, 4), false);
   assert.equal(boxesOverlap(layout.touchZones.aim, layout.bottomStatus, 4), false);
+  assert.equal(boxesOverlap(layout.minimap, layout.bottomStatus, 4), false);
+  assert.equal(layout.cssVars["--mobile-class-card-height"], "112px");
+});
+
+test("Samsung-like portrait keeps minimap, cards, touch zones, and bottom HUD separated", () => {
+  const layout = computeHudSafeZones({
+    viewport: { width: 384, height: 854 },
+    upgradeCollapsed: true,
+    classCardsVisible: true
+  });
+
+  assert.equal(layout.viewport.phonePortrait, true);
+  assert.equal(layout.viewport.compactHud, true);
+  assert.equal(layout.rightDock, null);
+  assert.equal(layout.camera.visibleWorldWidth >= 525, true);
+  assert.equal(layout.camera.visibleWorldHeight >= 1150, true);
+  assert.equal(boxesOverlap(layout.classCards, layout.bottomStatus, 4), false);
+  assert.equal(boxesOverlap(layout.classCards, layout.touchZones.move, 4), false);
+  assert.equal(boxesOverlap(layout.classCards, layout.touchZones.aim, 4), false);
+  assert.equal(boxesOverlap(layout.minimap, layout.bottomStatus, 4), false);
+  assert.equal(boxesOverlap(layout.minimap, layout.touchZones.aim, 4), false);
+});
+
+test("phone landscape uses compact HUD instead of desktop side docks", () => {
+  const layout = computeHudSafeZones({
+    viewport: { width: 854, height: 384 },
+    upgradeCollapsed: true,
+    classCardsVisible: true
+  });
+
+  assert.equal(layout.viewport.phoneLandscape, true);
+  assert.equal(layout.rightDock, null);
+  assert.equal(layout.cssVars["--mobile-class-card-height"], "96px");
+  assert.equal(boxesOverlap(layout.classCards, layout.minimap, 4), false);
+  assert.equal(boxesOverlap(layout.classCards, layout.bottomStatus, 4), false);
+  assert.equal(boxesOverlap(layout.touchZones.move, layout.bottomStatus, 4), false);
+  assert.equal(boxesOverlap(layout.touchZones.aim, layout.bottomStatus, 4), false);
 });
 
 test("desktop safe-zone output keeps touch boxes inactive", () => {
@@ -73,4 +111,5 @@ test("desktop safe-zone output keeps touch boxes inactive", () => {
   assert.equal(layout.touchZones.aim, null);
   assert.equal(layout.touchZones.fireLock, null);
   assert.equal(layout.cssVars["--class-card-bottom"], "122px");
+  assert.equal(layout.camera.scale, 1);
 });

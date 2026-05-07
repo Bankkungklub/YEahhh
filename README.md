@@ -83,7 +83,7 @@ Developer seed account for local development:
 - Hide/show stat upgrades: `U`; upgrade buttons show current/max level plus a before/after stat preview, and the collapsed control reads `SHOW UPGRADES +N` so it is clear that points are still available.
 - Audio settings: `Menu`
 - Mobile/touch: left thumb moves, right thumb aims/fires, and the `LOCK` button toggles continuous fire using the last aim direction.
-- Mobile combat HUD uses explicit safe zones: class cards lift above the thumb-control lane, fire lock stays below class cards, and cards clamp to two fact chips on phone widths.
+- Mobile combat HUD uses explicit safe zones and viewport-aware camera zoom-out: phone portrait/landscape viewports see more arena, class cards lift above the thumb-control lane, fire lock stays below class cards, the minimap moves to a compact top-right box, and cards clamp to two fact chips on phones.
 - Control branch: `Overseer`, `Overlord`, `Necromancer`, and `Hive Lord` use fire input to command drones. Hold fire/right stick to send drones toward your aim point; release to recall them into orbit.
 - Weapon identity rules are class-specific: `Streamliner` emits five straight forward shots as a timed stream, `Gunner` / `Auto Gunner` / `Sprayer` now use short rapid-spray cadence windows, while trap classes place armed defenses instead of normal bullets.
 - Class cards show config-derived weapon fact chips such as `7 shots`, `120ms spray`, `drone 10`, `trap blocks`, `850ms steer`, or `heavy shell` so tank choices are readable during live play.
@@ -128,7 +128,7 @@ Browser smoke tests are available for runtime UI/gameplay regressions:
 npm run test:browser
 ```
 
-The Playwright smoke harness starts a local server on `http://127.0.0.1:3101`, boots the real browser client, joins the arena, logs in as the local developer Admin account, sets level `60`, selects `Flank Guard -> Tri-Angle -> Fighter -> Comet`, opens the TREE modal, toggles F3 debug, and checks a `390x720` mobile flow with synthetic twin-stick drag, right-stick fire, fire lock, developer level class cards, mobile fact-chip clamping, and class-card overlap guards. Console errors and page errors fail the smoke run. Use `npm run test:all` when you want both the Node unit suite and browser smoke suite.
+The Playwright smoke harness starts a local server on `http://127.0.0.1:3101`, boots the real browser client, joins the arena, logs in as the local developer Admin account, sets level `60`, selects `Flank Guard -> Tri-Angle -> Fighter -> Comet`, opens the TREE modal, toggles F3 debug, and checks a `390x720` mobile flow with synthetic twin-stick drag, right-stick fire, fire lock, developer level class cards, mobile fact-chip clamping, camera scale `< 1`, top-right minimap layout, and class-card overlap guards. It also checks an `854x384` phone-landscape compact HUD path so short screens do not get desktop HUD density. Console errors and page errors fail the smoke run. Use `npm run test:all` when you want both the Node unit suite and browser smoke suite.
 
 ## Development Notes
 
@@ -165,6 +165,7 @@ The Playwright smoke harness starts a local server on `http://127.0.0.1:3101`, b
 - WebSocket hardening lives in `server/src/networkHub.js`: origin allowlist, max connected clients, heartbeat ping/pong, stale socket closure, per-client message-rate guard, and shutdown closure. Client protocol and gameplay payloads are unchanged.
 - Health and readiness routes live in `server/src/httpRouter.js`: `/healthz` reports process/storage readiness without secrets, and `/readyz` returns `503` while booting or draining.
 - Client rendering is Canvas-only and lives in `client/src/render/canvasRenderer.js`; the active gameplay style is bright arcade/pixel-inspired.
+- Mobile camera scale rules live in `client/src/render/cameraViewport.js`. Desktop remains `1.0`; compact phone portrait uses `clamp(width / 540, 0.68, 0.74)`, compact phone landscape uses `clamp(height / 520, 0.72, 0.84)`, and debug reports visible world size so Samsung-like viewports can be checked without guessing.
 - Snapshot-derived muzzle flashes and impact bursts live in `client/src/game/combatEffects.js`; they are visual-only.
 - Collapsible stat upgrade panel state lives in `client/src/ui/upgradePanelState.js` and persists in `localStorage`; pulse timing is time-based so the collapsed state does not get stuck.
 - Client audio lives in `client/src/audio/*`; it is visual/snapshot-derived, client-only, and never changes server authority, damage, XP, movement, bot AI, rooms, login, or shop. Fire SFX reuse existing assets but apply feedback-profile gain/pitch/cooldown tuning for rapid, storm, heavy, rocket, missile, trap, drone, booster, and body identities.

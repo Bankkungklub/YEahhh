@@ -7,15 +7,28 @@ export function createUpgradePanelState(storage = globalThis.localStorage, confi
   return {
     collapsed,
     userCollapsed: collapsed,
+    compactCollapsed: true,
     lastAvailablePoints: 0,
     pulseUntilMs: 0
   };
 }
 
-export function toggleUpgradePanelState(state, storage = globalThis.localStorage, config = UPGRADE_PANEL_CONFIG) {
+export function toggleUpgradePanelState(state, storage = globalThis.localStorage, config = UPGRADE_PANEL_CONFIG, {
+  compactHud = false
+} = {}) {
+  if (compactHud) {
+    return {
+      collapsed: Boolean(state?.collapsed),
+      userCollapsed: Boolean(state?.userCollapsed),
+      compactCollapsed: !Boolean(state?.compactCollapsed ?? true),
+      lastAvailablePoints: Math.max(0, Number(state?.lastAvailablePoints) || 0),
+      pulseUntilMs: Math.max(0, Number(state?.pulseUntilMs) || 0)
+    };
+  }
   const next = {
     collapsed: !Boolean(state?.collapsed),
     userCollapsed: !Boolean(state?.collapsed),
+    compactCollapsed: Boolean(state?.compactCollapsed ?? true),
     lastAvailablePoints: Math.max(0, Number(state?.lastAvailablePoints) || 0),
     pulseUntilMs: Math.max(0, Number(state?.pulseUntilMs) || 0)
   };
@@ -23,11 +36,14 @@ export function toggleUpgradePanelState(state, storage = globalThis.localStorage
   return next;
 }
 
-export function markUpgradePointsChanged(panelState, points, nowMs = 0, config = UPGRADE_PANEL_CONFIG) {
+export function markUpgradePointsChanged(panelState, points, nowMs = 0, config = UPGRADE_PANEL_CONFIG, {
+  compactHud = false
+} = {}) {
   const safePoints = Math.max(0, Math.trunc(Number(points) || 0));
   const previousPoints = Math.max(0, Math.trunc(Number(panelState?.lastAvailablePoints) || 0));
   const gainedPoints = safePoints > previousPoints;
   const shouldAutoExpand = (
+    !compactHud &&
     gainedPoints &&
     config.autoExpandOnFirstPoints &&
     !panelState?.userCollapsed &&
@@ -36,6 +52,7 @@ export function markUpgradePointsChanged(panelState, points, nowMs = 0, config =
   return {
     collapsed: shouldAutoExpand ? false : Boolean(panelState?.collapsed),
     userCollapsed: Boolean(panelState?.userCollapsed),
+    compactCollapsed: Boolean(panelState?.compactCollapsed ?? true),
     lastAvailablePoints: safePoints,
     pulseUntilMs: gainedPoints
       ? nowMs + config.pulseMs
@@ -48,10 +65,13 @@ export function getUpgradePanelViewModel({
   localTank,
   nowMs = 0,
   visible = true,
-  config = UPGRADE_PANEL_CONFIG
+  config = UPGRADE_PANEL_CONFIG,
+  compactHud = false
 }) {
   const points = Math.max(0, Math.trunc(Number(localTank?.upgradePoints) || 0));
-  const collapsed = Boolean(panelState?.collapsed);
+  const collapsed = compactHud
+    ? Boolean(panelState?.compactCollapsed ?? true)
+    : Boolean(panelState?.collapsed);
   const canUpgrade = Boolean(visible && localTank && localTank.state === "alive" && points > 0);
   const status = !visible ? "hidden" : collapsed ? "collapsed" : "expanded";
   return {

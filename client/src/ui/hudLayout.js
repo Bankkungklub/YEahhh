@@ -1,4 +1,5 @@
 import { HUD_LAYOUT_CONFIG } from "./hudLayoutConfig.js";
+import { computeCameraScale, computeVisibleWorldSize, getViewportProfile } from "../render/cameraViewport.js";
 
 export function computeHudSafeZones({
   viewport = {},
@@ -8,10 +9,17 @@ export function computeHudSafeZones({
 } = {}) {
   const width = Math.max(1, Number(viewport.width) || 1280);
   const height = Math.max(1, Number(viewport.height) || 720);
-  const mobile = width < config.desktopBreakpoint;
+  const profile = getViewportProfile({
+    width,
+    height
+  }, {
+    desktopBreakpoint: config.desktopBreakpoint,
+    compactHeightBreakpoint: config.compactHeightBreakpoint
+  });
+  const mobile = profile.compactHud;
   const inset = mobile ? config.mobileInset : config.sideInset;
   const gap = config.panelGap;
-  const bottomHudHeight = config.bottomHudHeight;
+  const bottomHudHeight = mobile ? config.mobileBottomHudHeight : config.bottomHudHeight;
   const touchZoneHeight = mobile
     ? clampNumber(
         Math.round(height * config.mobileTouchZoneHeightRatio),
@@ -19,25 +27,24 @@ export function computeHudSafeZones({
         config.mobileTouchZoneMaxHeight
       )
     : 0;
-  const classCardsHeight = mobile ? config.mobileClassCardsHeight : config.classCardsHeight;
+  const classCardsHeight = getClassCardsHeight({ mobile, profile, config });
   const classCardBottom = mobile && classCardsVisible
     ? bottomHudHeight + gap + touchZoneHeight + gap
     : bottomHudHeight + gap;
   const leftWidth = upgradeCollapsed ? config.upgradeCollapsedWidth : config.upgradeExpandedWidth;
   const rightWidth = mobile ? Math.min(190, width - inset * 2) : config.leaderboardWidth;
-  const minimap = makeBox(
-    width - inset - Math.min(config.minimapSize, Math.max(112, width * 0.16)),
-    height - inset - Math.min(config.minimapSize, Math.max(112, width * 0.16)),
-    Math.min(config.minimapSize, Math.max(112, width * 0.16)),
-    Math.min(config.minimapSize, Math.max(112, width * 0.16))
-  );
+  const minimap = makeMinimapBox({ width, height, inset, mobile, profile, config });
   const bottomStatus = makeBox(inset, height - inset - bottomHudHeight + 14, Math.min(560, width - inset * 2), bottomHudHeight - 14);
   const topLeftDock = mobile && classCardsVisible
-    ? makeBox(inset, inset, Math.min(176, width - inset * 2), upgradeCollapsed ? config.upgradeCollapsedHeight : 236)
-    : makeBox(inset, mobile ? height - 86 - (upgradeCollapsed ? config.upgradeCollapsedHeight : 236) : inset, Math.min(leftWidth, width - inset * 2), upgradeCollapsed ? config.upgradeCollapsedHeight : config.upgradeExpandedHeight);
-  const rightDock = makeBox(width - inset - rightWidth, inset, rightWidth, mobile ? 176 : config.leaderboardHeight);
+    ? makeBox(inset, inset, Math.min(176, width - inset * 2), upgradeCollapsed ? config.upgradeCollapsedHeight : 184)
+    : makeBox(inset, mobile ? inset : inset, Math.min(leftWidth, width - inset * 2), upgradeCollapsed ? config.upgradeCollapsedHeight : (mobile ? 184 : config.upgradeExpandedHeight));
+  const rightDock = mobile && config.mobileHideLeaderboard
+    ? null
+    : makeBox(width - inset - rightWidth, inset, rightWidth, mobile ? 176 : config.leaderboardHeight);
   const safeLeft = mobile ? inset : inset + Math.max(leftWidth, config.treeButtonWidth + gap + config.developerPanelWidth) + gap;
-  const safeRight = mobile ? inset : inset + rightWidth + gap;
+  const safeRight = mobile
+    ? inset + (profile.phoneLandscape ? minimap.width + gap : 0)
+    : inset + rightWidth + gap;
   const classWidth = Math.min(config.classCardsMaxWidth, Math.max(0, width - safeLeft - safeRight));
   const classCards = classCardsVisible
     ? makeBox(
@@ -62,7 +69,14 @@ export function computeHudSafeZones({
   );
 
   return {
-    viewport: { width, height, mobile },
+    viewport: {
+      width,
+      height,
+      mobile,
+      compactHud: profile.compactHud,
+      phonePortrait: profile.phonePortrait,
+      phoneLandscape: profile.phoneLandscape
+    },
     cssVars: {
       "--hud-panel-gap": `${gap}px`,
       "--hud-bottom-height": `${bottomHudHeight}px`,
@@ -70,10 +84,12 @@ export function computeHudSafeZones({
       "--hud-right-width": `${safeRight}px`,
       "--class-card-bottom": `${classCardBottom}px`,
       "--mobile-class-card-height": `${classCardsHeight}px`,
+      "--mobile-minimap-size": `${minimap.width}px`,
       "--touch-fire-lock-bottom": `${bottomHudHeight + gap}px`,
       "--touch-stick-radius": `${config.touchStickVisualRadius}px`,
       "--touch-stick-knob": `${config.touchStickKnobSize}px`
     },
+    camera: makeCameraSummary({ width, height }),
     topLeftDock,
     rightDock,
     bottomStatus,
@@ -81,6 +97,36 @@ export function computeHudSafeZones({
     touchZones,
     actionPill,
     classCards
+  };
+}
+
+function getClassCardsHeight({ mobile, profile, config }) {
+  if (!mobile) {
+    return config.classCardsHeight;
+  }
+  return profile.phoneLandscape
+    ? config.mobileLandscapeClassCardsHeight
+    : config.mobileClassCardsHeightCompact;
+}
+
+function makeMinimapBox({ width, height, inset, mobile, profile, config }) {
+  if (mobile) {
+    const size = profile.phoneLandscape
+      ? config.mobileLandscapeMinimapSize
+      : config.mobileMinimapSize;
+    return makeBox(width - inset - size, inset, size, size);
+  }
+  const size = Math.min(config.minimapSize, Math.max(112, width * 0.16));
+  return makeBox(width - inset - size, height - inset - size, size, size);
+}
+
+function makeCameraSummary({ width, height }) {
+  const scale = computeCameraScale({ width, height });
+  const visibleWorld = computeVisibleWorldSize({ width, height }, scale);
+  return {
+    scale,
+    visibleWorldWidth: Math.round(visibleWorld.width),
+    visibleWorldHeight: Math.round(visibleWorld.height)
   };
 }
 
