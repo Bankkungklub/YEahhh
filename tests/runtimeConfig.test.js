@@ -45,3 +45,17 @@ test("Render external URL can satisfy production public origin requirements", ()
   assert.equal(runtime.publicBaseUrl, "https://tank-arena-public-beta.onrender.com");
   assert.equal(isOriginAllowed("https://tank-arena-public-beta.onrender.com", runtime), true);
 });
+
+test("Render external URL stays allowed when manual public URL is stale", () => {
+  const runtime = loadRuntimeConfig({
+    NODE_ENV: "production",
+    PUBLIC_BASE_URL: "https://old-name.onrender.com",
+    ALLOWED_ORIGINS: "https://old-name.onrender.com",
+    RENDER_EXTERNAL_URL: "https://tankarenaplubic.onrender.com"
+  }, { rootDir: process.cwd() });
+
+  assert.deepEqual(validateRuntimeConfig(runtime), []);
+  assert.equal(isOriginAllowed("https://old-name.onrender.com", runtime), true);
+  assert.equal(isOriginAllowed("https://tankarenaplubic.onrender.com", runtime), true);
+  assert.equal(isOriginAllowed("https://evil.example", runtime), false);
+});

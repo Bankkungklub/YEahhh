@@ -21,8 +21,12 @@ export function loadRuntimeConfig(env = process.env, {
   const production = nodeEnv === "production";
   const renderExternalUrl = normalizeOptionalUrl(env.RENDER_EXTERNAL_URL)
     || normalizeOptionalUrl(env.RENDER_EXTERNAL_HOSTNAME ? `https://${env.RENDER_EXTERNAL_HOSTNAME}` : "");
-  const publicBaseUrl = normalizeOptionalUrl(env.PUBLIC_BASE_URL) || renderExternalUrl;
-  const allowedOrigins = parseAllowedOrigins(env.ALLOWED_ORIGINS, publicBaseUrl);
+  const explicitPublicBaseUrl = normalizeOptionalUrl(env.PUBLIC_BASE_URL);
+  const publicBaseUrl = explicitPublicBaseUrl || renderExternalUrl;
+  const allowedOrigins = parseAllowedOrigins(env.ALLOWED_ORIGINS, [
+    publicBaseUrl,
+    renderExternalUrl
+  ]);
   const debugEndpointsEnabled = readBoolean(
     env.DEBUG_ENDPOINTS,
     production ? false : true
@@ -103,10 +107,12 @@ export function isOriginAllowed(origin, runtime) {
   return allowed.includes("*") || allowed.includes(cleanOrigin);
 }
 
-function parseAllowedOrigins(rawValue, publicBaseUrl) {
+function parseAllowedOrigins(rawValue, baseOrigins = []) {
   const origins = new Set();
-  if (publicBaseUrl) {
-    origins.add(publicBaseUrl);
+  for (const baseOrigin of baseOrigins) {
+    if (baseOrigin) {
+      origins.add(baseOrigin);
+    }
   }
   for (const part of String(rawValue || "").split(",")) {
     const origin = normalizeOptionalUrl(part);
