@@ -34,3 +34,14 @@ test("production runtime normalizes allowed origins and secure cookies", () => {
   assert.equal(isOriginAllowed("https://backup.example", runtime), true);
   assert.equal(isOriginAllowed("https://evil.example", runtime), false);
 });
+
+test("Render external URL can satisfy production public origin requirements", () => {
+  const runtime = loadRuntimeConfig({
+    NODE_ENV: "production",
+    RENDER_EXTERNAL_URL: "https://tank-arena-public-beta.onrender.com"
+  }, { rootDir: process.cwd() });
+
+  assert.deepEqual(validateRuntimeConfig(runtime), []);
+  assert.equal(runtime.publicBaseUrl, "https://tank-arena-public-beta.onrender.com");
+  assert.equal(isOriginAllowed("https://tank-arena-public-beta.onrender.com", runtime), true);
+});

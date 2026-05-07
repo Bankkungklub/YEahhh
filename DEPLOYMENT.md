@@ -9,6 +9,12 @@ This deployment path is for one public beta Node server. It is intentionally not
 - Attach a persistent volume and set `ACCOUNT_STORE_PATH` to a file on that volume.
 - Do not run multiple processes against the same JSON file.
 
+## Render Blueprint
+
+This repo includes `render.yaml` for a Render Blueprint deploy. It creates one paid `starter` Node web service in the `singapore` region with a `/data` persistent disk. Render's Free web services cannot attach persistent disks, so do not use the Free instance type for this JSON-backed public beta.
+
+Render automatically provides `RENDER_EXTERNAL_URL`; the server uses it as the allowed public origin when `PUBLIC_BASE_URL` / `ALLOWED_ORIGINS` are not set manually.
+
 ## Required Production Environment
 
 ```bash

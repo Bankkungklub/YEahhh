@@ -19,7 +19,9 @@ export function loadRuntimeConfig(env = process.env, {
 } = {}) {
   const nodeEnv = String(env.NODE_ENV || "development").trim() || "development";
   const production = nodeEnv === "production";
-  const publicBaseUrl = normalizeOptionalUrl(env.PUBLIC_BASE_URL);
+  const renderExternalUrl = normalizeOptionalUrl(env.RENDER_EXTERNAL_URL)
+    || normalizeOptionalUrl(env.RENDER_EXTERNAL_HOSTNAME ? `https://${env.RENDER_EXTERNAL_HOSTNAME}` : "");
+  const publicBaseUrl = normalizeOptionalUrl(env.PUBLIC_BASE_URL) || renderExternalUrl;
   const allowedOrigins = parseAllowedOrigins(env.ALLOWED_ORIGINS, publicBaseUrl);
   const debugEndpointsEnabled = readBoolean(
     env.DEBUG_ENDPOINTS,

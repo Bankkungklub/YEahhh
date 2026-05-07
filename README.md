@@ -45,9 +45,12 @@ SHUTDOWN_GRACE_MS=8000
 
 Production boot fails if no public origin is configured. Account data is still JSON-backed, but `ACCOUNT_STORE_PATH` can point at a persistent volume such as `/data/accounts.json`. The server probes that path on startup, writes atomic JSON saves, creates bounded `.bak` backups, exposes `/healthz` and `/readyz`, rejects explicit bad-origin API/WebSocket requests, sends secure cookies in production, closes stale/spam WebSocket clients, and drains on `SIGTERM`.
 
+For Render, this repo includes `render.yaml`. It defines a single `starter` Node web service in Singapore with a `/data` persistent disk. Render provides `RENDER_EXTERNAL_URL` automatically, and the server uses that URL as the default allowed public origin.
+
 Public beta limits:
 
 - One Node process only; no clustering or multi-region room sharing yet.
+- Render Free web services cannot attach persistent disks, so use a paid instance type for this JSON-backed public beta.
 - Use HTTPS in front of the server so secure cookies work.
 - Keep `/debug/*` disabled in production unless you are doing a private diagnosis.
 - Back up the persistent volume before changing hosts or storage paths.

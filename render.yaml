@@ -1,0 +1,39 @@
+services:
+  - type: web
+    name: tank-arena-public-beta
+    runtime: node
+    plan: starter
+    region: singapore
+    branch: main
+    buildCommand: npm install
+    startCommand: npm start
+    numInstances: 1
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: TRUST_PROXY
+        value: "1"
+      - key: ACCOUNT_STORE_PATH
+        value: /data/accounts.json
+      - key: SESSION_COOKIE_SECURE
+        value: auto
+      - key: DEBUG_ENDPOINTS
+        value: "false"
+      - key: MAX_WS_CLIENTS
+        value: "160"
+      - key: WS_HEARTBEAT_MS
+        value: "25000"
+      - key: WS_HEARTBEAT_TIMEOUT_MS
+        value: "10000"
+      - key: WS_MESSAGE_RATE_LIMIT
+        value: "90"
+      - key: ACCOUNT_BACKUP_INTERVAL_MS
+        value: "21600000"
+      - key: ACCOUNT_BACKUP_MAX_FILES
+        value: "12"
+      - key: SHUTDOWN_GRACE_MS
+        value: "8000"
+    disk:
+      name: tank-arena-data
+      mountPath: /data
+      sizeGB: 1
