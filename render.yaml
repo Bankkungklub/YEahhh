@@ -2,7 +2,7 @@ services:
   - type: web
     name: tank-arena-public-beta
     runtime: node
-    plan: starter
+    plan: free
     region: singapore
     branch: main
     buildCommand: npm install
@@ -13,8 +13,6 @@ services:
         value: production
       - key: TRUST_PROXY
         value: "1"
-      - key: ACCOUNT_STORE_PATH
-        value: /data/accounts.json
       - key: SESSION_COOKIE_SECURE
         value: auto
       - key: DEBUG_ENDPOINTS
@@ -33,7 +31,3 @@ services:
         value: "12"
       - key: SHUTDOWN_GRACE_MS
         value: "8000"
-    disk:
-      name: tank-arena-data
-      mountPath: /data
-      sizeGB: 1

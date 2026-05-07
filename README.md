@@ -33,7 +33,6 @@ PORT=3000
 PUBLIC_BASE_URL=https://your-domain.example
 ALLOWED_ORIGINS=https://your-domain.example
 TRUST_PROXY=1
-ACCOUNT_STORE_PATH=/data/accounts.json
 SESSION_COOKIE_SECURE=auto
 DEBUG_ENDPOINTS=false
 MAX_WS_CLIENTS=160
@@ -45,14 +44,14 @@ ACCOUNT_BACKUP_MAX_FILES=12
 SHUTDOWN_GRACE_MS=8000
 ```
 
-Production boot fails if no public origin is configured. Account data is still JSON-backed, but `ACCOUNT_STORE_PATH` can point at a persistent volume such as `/data/accounts.json`. The server probes that path on startup, writes atomic JSON saves, creates bounded `.bak` backups, exposes `/healthz` and `/readyz`, rejects explicit bad-origin API/WebSocket requests, sends secure cookies in production, closes stale/spam WebSocket clients, and drains on `SIGTERM`.
+Production boot fails if no public origin is configured. Account data is still JSON-backed. By default it uses `server/data/accounts.json`; paid hosts with a persistent disk can set `ACCOUNT_STORE_PATH` to a volume path such as `/data/accounts.json`. The server probes that path on startup, writes atomic JSON saves, creates bounded `.bak` backups, exposes `/healthz` and `/readyz`, rejects explicit bad-origin API/WebSocket requests, sends secure cookies in production, closes stale/spam WebSocket clients, and drains on `SIGTERM`.
 
-For Render, this repo includes `render.yaml`. It defines a single `starter` Node web service in Singapore with a `/data` persistent disk. Render provides `RENDER_EXTERNAL_URL` automatically, and the server uses that URL as the default allowed public origin.
+For Render, this repo includes `render.yaml`. It defines a single Free Node web service in Singapore without a persistent disk so first-time public beta deployment works without `/data` write permissions. Render provides `RENDER_EXTERNAL_URL` automatically, and the server uses that URL as the default allowed public origin.
 
 Public beta limits:
 
 - One Node process only; no clustering or multi-region room sharing yet.
-- Render Free web services cannot attach persistent disks, so use a paid instance type for this JSON-backed public beta.
+- Render Free web services can run the game, but account JSON is ephemeral. Upgrade to a paid instance with a disk and set `ACCOUNT_STORE_PATH=/data/accounts.json` when you want persistent accounts.
 - Use HTTPS in front of the server so secure cookies work.
 - Keep `/debug/*` disabled in production unless you are doing a private diagnosis.
 - Back up the persistent volume before changing hosts or storage paths.
