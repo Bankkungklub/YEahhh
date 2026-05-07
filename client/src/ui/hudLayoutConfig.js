@@ -1,0 +1,60 @@
+export const HUD_LAYOUT_CONFIG = Object.freeze({
+  hudVisibility: {
+    hideGameplayControlsWhenDead: true,
+    suspendClassCardsWhenModalOpen: true,
+    showLeaderboardBehindDeath: true
+  },
+  upgradePanel: {
+    storageKey: "tankArena.upgradePanel.v1",
+    hotkey: "KeyU",
+    collapsedLabel: "UPGRADES",
+    expandedLabel: "HIDE UPGRADES",
+    defaultCollapsed: false,
+    autoPulseWhenPointsAvailable: true,
+    autoExpandOnFirstPoints: true,
+    pulseMs: 1600
+  },
+  classUpgradeUi: {
+    maxVisibleCards: 4,
+    keyboardShortcuts: ["1", "2", "3", "4"],
+    pendingTimeoutMs: 900,
+    bottomSafeGapPx: 20,
+    cardMaxHeightPx: 132,
+    mobileCardMinWidthPx: 128,
+    dismissHotkey: "Escape"
+  },
+  hudLayout: {
+    desktopBreakpoint: 760,
+    panelGap: 12,
+    bottomHudHeight: 110,
+    topInset: 16,
+    sideInset: 16,
+    mobileInset: 12,
+    upgradeExpandedWidth: 248,
+    upgradeCollapsedWidth: 190,
+    upgradeExpandedHeight: 372,
+    upgradeCollapsedHeight: 52,
+    treeButtonWidth: 128,
+    treeButtonHeight: 52,
+    developerPanelWidth: 184,
+    developerPanelHeight: 154,
+    leaderboardWidth: 260,
+    leaderboardHeight: 230,
+    minimapSize: 150,
+    classCardsMaxWidth: 720,
+    classCardsHeight: 178,
+    mobileClassCardsHeight: 148,
+    mobileTouchZoneHeightRatio: 0.17,
+    mobileTouchZoneMinHeight: 96,
+    mobileTouchZoneMaxHeight: 128,
+    mobileTouchZoneWidthRatio: 0.43,
+    mobileFireLockWidth: 78,
+    mobileFireLockHeight: 54,
+    touchStickVisualRadius: 66,
+    touchStickKnobSize: 52,
+    actionPillWidth: 260,
+    actionPillHeight: 38,
+    deathOverlayZ: 45,
+    modalZ: 50
+  }
+});

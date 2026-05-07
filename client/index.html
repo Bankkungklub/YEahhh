@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Tank Arena</title>
+    <link rel="icon" href="data:,">
+    <link rel="stylesheet" href="/client/styles.css">
+  </head>
+  <body>
+    <canvas id="gameCanvas" aria-label="Tank arena"></canvas>
+
+    <section id="menu" class="menu" aria-labelledby="menuTitle">
+      <div class="menu-arena-art" aria-hidden="true">
+        <span class="arena-shape circle red a1"></span>
+        <span class="arena-shape circle red a2"></span>
+        <span class="arena-shape circle red a3"></span>
+        <span class="arena-shape circle red a4"></span>
+        <span class="arena-shape square gold a5"></span>
+        <span class="arena-shape square gold a6"></span>
+        <span class="arena-shape tri magenta a7"></span>
+        <span class="arena-shape tri magenta a8"></span>
+        <span class="arena-tank ghost a9"></span>
+        <span class="arena-tank teal a10"></span>
+      </div>
+
+      <div class="menu-corner menu-corner-left">
+        <button id="loginMenuButton" class="arcade-top-button login" type="button">Log In</button>
+        <button id="shopMenuButton" class="arcade-top-button shop" type="button"><span class="star-icon">*</span> Shop</button>
+      </div>
+
+      <div class="menu-corner menu-corner-right">
+        <span class="new-burst">NEW!</span>
+        <button id="customGamesButton" class="arcade-top-button custom" type="button">Custom Games</button>
+        <button id="settingsMenuButton" class="arcade-top-button menu-tab" type="button">&lt; Menu</button>
+      </div>
+
+      <div class="menu-panel">
+        <div class="menu-copy">
+          <p id="menuEyebrow" class="menu-eyebrow">Online tank arena</p>
+          <h1 id="menuTitle">Tank Arena</h1>
+          <p id="menuTagline" class="menu-tagline">Shoot shapes, level up, survive bots.</p>
+          <p id="menuGoal" class="menu-goal">Farm XP from colored shapes, spend upgrade points, and climb the leaderboard.</p>
+        </div>
+
+        <div class="menu-select-grid" aria-label="Arena settings">
+          <div class="menu-select-card active">
+            <span>Game Mode</span>
+            <strong>FFA</strong>
+          </div>
+          <button id="regionButton" class="menu-select-card" type="button">
+            <span>Region</span>
+            <strong>Localhost <em>LAN</em></strong>
+          </button>
+        </div>
+
+        <form id="joinForm" class="arcade-join">
+          <label id="playerNameLabel" for="playerName">Pilot name</label>
+          <div class="join-row">
+            <input id="playerName" name="playerName" maxlength="16" autocomplete="nickname" placeholder="Bank">
+            <button id="joinButton" class="join-button" type="submit">Join Arena</button>
+          </div>
+        </form>
+
+        <div id="menuStatusWrap" class="menu-status ready" aria-live="polite">
+          <span class="status-dot" aria-hidden="true"></span>
+          <p id="menuStatus" class="status">Online arena ready. Shoot shapes to level up.</p>
+        </div>
+
+        <div class="menu-info">
+          <div class="menu-controls" aria-label="Quick controls">
+            <p id="menuControlsTitle" class="menu-controls-title">Quick controls</p>
+            <div id="menuControlChips" class="menu-chip-row"></div>
+            <div id="menuMobileChips" class="menu-chip-row mobile"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="menu-bottom-note" aria-hidden="true">
+        <span class="new-burst small">NEW!</span>
+        <strong>Bot balance updated!</strong>
+      </div>
+    </section>
+
+    <section id="hud" class="hud hidden" aria-live="polite">
+      <div class="bars">
+        <div class="bar-label"><span id="healthText">HP 0 / 0</span><span id="levelText">Level 1</span></div>
+        <div class="bar"><div id="healthFill" class="bar-fill health"></div></div>
+        <div class="bar"><div id="xpFill" class="bar-fill xp"></div></div>
+      </div>
+
+      <div id="upgradePanel" class="upgrade-panel"></div>
+
+      <button id="treeButton" class="tree-button" type="button" title="Open tank evolution tree">TREE</button>
+
+      <aside class="leaderboard">
+        <h2>Leaderboard</h2>
+        <ol id="leaderboardList"></ol>
+      </aside>
+
+      <pre id="debugOverlay" class="debug hidden"></pre>
+    </section>
+
+    <section id="deathScreen" class="death hidden">
+      <div class="death-panel">
+        <h2>Destroyed</h2>
+        <p id="deathText">You were destroyed.</p>
+        <button id="respawnButton" type="button">Respawn</button>
+      </div>
+    </section>
+
+    <script type="module" src="/client/src/main.js"></script>
+  </body>
+</html>
